@@ -7,7 +7,10 @@ Created on Sun Dec 20 18:28:23 2020
 
 import requests
 import json
-
+import pandas as pd
+import lxml.html
+from lxml.cssselect import CSSSelector
+import numpy as np
 
 headers = {'authority': 'api.gartner.com',
            'method': 'GET',
@@ -61,15 +64,87 @@ initiatives = ['Executive Leadership: AI, Data and Analytics',
                'Procurement Function Management',
                'Shared Services']
 
-url = 'https://api.gartner.com/search/gcom/channel/research?&filter=facetKi:%22Procurement%20and%20Strategic%20Sourcing%20Applications%22&q=&start=10&sort=dispDate+desc'
+url_base = 'https://api.gartner.com/search/gcom/channel/research?&filter=facetKi:%22'
+url_hat = '%22&q=&start=10&sort=dispDate+desc'
+research = []
 
 with requests.session() as s:
 
     # load cookies:
     s.get('https://www.gartner.com/search/research?fc=facetKi:%22Procurement%20and%20Strategic%20Sourcing%20Applications%22&st=dispDate%20desc', headers=headers)
 
-    # get data:
-    data = s.get(url, headers=headers).json()
+    for x in initiatives:
+        url = url_base + x.replace(" ", "%20") + url_hat
+        # get data:
+        data = s.get(url, headers=headers).json()
+        doc_count = data['numFound']
+        collected = data['start']
+        while collected < doc_count:
+            collected = data['start']
+            research.append(data)
+            try:
+                nextcall = data['nextStart']
+            except KeyError:
+                collected += 10
+            url = url.replace(("start="+str(collected)), ("start="+str(nextcall)))
+            data = s.get(url, headers=headers).json()
 
-    # print data to screen:
-    # print(json.dumps(data, indent=4))
+
+resource_frame = pd.DataFrame(columns=['Title',
+                                       'Author_List',
+                                       'pubDate',
+                                       'resID',
+                                       'Summary',
+                                       'Type'])
+for x in range(len(research)):
+    dict_resource_list_temp = pd.DataFrame(columns=['Title',
+                                                    'Author_List',
+                                                    'pubDate',
+                                                    'resID',
+                                                    'Summary',
+                                                    'Type'])
+    for i in range(len(research[x]['docs'])):
+        resources_temp = pd.DataFrame(
+            {'Title': research[x]['docs'][i]['title'],
+             'Author_List': research[x]['docs'][i]['authorIdNamePair'],
+             'pubDate': research[x]['docs'][i]['pubDate'],
+             'resID': research[x]['docs'][i]['resId'],
+             'Summary': research[x]['docs'][i]['summary'],
+             'Type': research[x]['docs'][i]['type']
+             })
+        dict_resource_list_temp = dict_resource_list_temp.append(resources_temp)
+#        print('Appended i = ',i,' for x = ',x)
+    resource_frame = resource_frame.append(dict_resource_list_temp)
+
+resource_frame.drop_duplicates(inplace=True)
+resources_df = resource_frame.groupby(['resID',
+                                       'Title',
+                                       'pubDate',
+                                       'Summary',
+                                       'Type'])['Author_List'].apply(','.join).reset_index()
+
+doc_url_base = 'https://api.gartner.com/document/'
+doc_url_hat = '?ref=0&platform=1'
+
+boolean = resource_frame.duplicated().count()
+boolean = resource_frame['resID'].duplicated().any()
+
+doc_data_df = pd.DataFrame(columns=['resID',
+                                    'key_initiatives'])
+ki_temp = pd.DataFrame()
+
+with requests.session() as s:
+
+    s.get('https://www.gartner.com/document/3975965', headers=headers)
+
+    for x in resources_df['resID'][0:200]:
+        doc_url = doc_url_base + str(x) + doc_url_hat
+        doc_data = s.get(doc_url, headers=headers).json()
+#        doc_data_df_temp = pd.DataFrame(
+#            {'resID': x,
+#             'key_initiatives': doc_data['document']['keyInitiative']['name']
+#             }, index=[x])
+#        doc_data_df = doc_data_df.append(doc_data_df_temp)
+        doc_data_df = doc_data_df.append(doc_data, ignore_index=True)
+
+np.save(arr=doc_data_df, file='Gartner_doc_data_df')
