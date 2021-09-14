@@ -2,7 +2,7 @@
 """
 Created on Tue Sep 14 14:03:40 2021
 
-@author: Ryan
+@author: Ryan Burns
 """
 
 from selenium import webdriver
@@ -47,8 +47,9 @@ def launch_webdriver(webdriver_path=None):
 
     Parameters
     ----------
-    webdriver_path : TYPE, optional
-        DESCRIPTION. The default is None.
+    webdriver_path : string, optional
+        Alternate filepath to directory containing chromedriver.exe.
+        The default is None.
 
     Returns
     -------
