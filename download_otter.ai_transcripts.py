@@ -50,8 +50,8 @@ def launch_webdriver(webdriver_path=None):
 
     Returns
     -------
-    None.
-
+    driver : webdriver
+        Initialized webdriver for retrieving and manipulating web pages.
     """
     options = Options()
     if webdriver_path is None:
@@ -60,7 +60,7 @@ def launch_webdriver(webdriver_path=None):
     sys.path.append(driver_filepath)
     driver = webdriver.Chrome(driver_filepath,
                               options=options)
-    return(driver)
+    return driver
 
 
 def scroll(driver, timeout):
