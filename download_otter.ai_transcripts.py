@@ -13,8 +13,9 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
 import sys
-from utilities import go_to_downloads, scroll
+from scraping_utilities import go_to_downloads, scroll
 
+print(sys.path.copy())
 
 xpath_dict = {'all_convo_page': ('//*[@class='
                                  '"otter_my_conversation_group__content"]'),

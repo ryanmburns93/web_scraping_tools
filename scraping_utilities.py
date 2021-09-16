@@ -9,6 +9,9 @@ import os
 import ctypes
 from ctypes import windll, wintypes
 from uuid import UUID
+import sys
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 
 def scroll(driver, timeout):
