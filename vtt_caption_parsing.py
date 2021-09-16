@@ -21,8 +21,10 @@ def read_caption(webvtt_file):
     return text_lst
 
 
-def get_vtt_file_list():
-    go_to_downloads()
+def get_vtt_file_list(vtt_dir=None):
+    if vtt_dir is None:
+        go_to_downloads()
+        vtt_dir = os.getcwd()
     path = Path('.')
     video_list = list(path.glob('**/*.vtt'))
     return video_list
@@ -30,11 +32,12 @@ def get_vtt_file_list():
 
 def main():
     video_list = get_vtt_file_list()
+    print(f'Found {len(video_list) videos. Beginning parsing.}')
     i = 0
     num_vids = len(video_list)
     for video in video_list:
         transcript = read_caption(video)
-        text = ' '.join(transcript).replace('\n',' ')
+        text = ' '.join(transcript).replace('\n', ' ')
         filestring = video.name[:-4] + '.txt'
         with open(filestring, "w+", encoding='utf-8') as file:
             file.write(text)
