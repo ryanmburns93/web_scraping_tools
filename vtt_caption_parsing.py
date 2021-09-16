@@ -8,13 +8,24 @@ Created on Mon Feb  8 13:29:19 2021
 import webvtt
 from pathlib import Path
 import os
-from utilities import go_to_downloads
-
-text_lst = []
-transcript = []
+from scraping_utilities import go_to_downloads
 
 
 def read_caption(webvtt_file):
+    """
+    Create list of every line in .vtt file.
+
+    Parameters
+    ----------
+    webvtt_file : string
+        File name for .vtt file being read.
+
+    Returns
+    -------
+    text_lst : list
+        List of each line in .vtt file.
+
+    """
     text_lst = []
     for caption in webvtt.read(webvtt_file):
         text_lst.append(caption.text)
@@ -22,20 +33,35 @@ def read_caption(webvtt_file):
 
 
 def get_vtt_file_list(vtt_dir=None):
+    """
+    Gather all .vtt file names from specified directory.
+
+    Parameters
+    ----------
+    vtt_dir : string, optional
+        File path to directory containing .vtt files. The default is None,
+        in which case the current working directory is searched.
+
+    Returns
+    -------
+    vtt_list : list
+        List of .vtt file names found in specified directory.
+
+    """
     if vtt_dir is None:
         go_to_downloads()
         vtt_dir = os.getcwd()
     path = Path('.')
-    video_list = list(path.glob('**/*.vtt'))
-    return video_list
+    vtt_list = list(path.glob('**/*.vtt'))
+    return vtt_list
 
 
 def main():
-    video_list = get_vtt_file_list()
-    print(f'Found {len(video_list) videos. Beginning parsing.}')
+    vtt_list = get_vtt_file_list()
+    print(f'Found {len(vtt_list)} caption files. Beginning parsing.')
     i = 0
-    num_vids = len(video_list)
-    for video in video_list:
+    num_vids = len(vtt_list)
+    for video in vtt_list:
         transcript = read_caption(video)
         text = ' '.join(transcript).replace('\n', ' ')
         filestring = video.name[:-4] + '.txt'
