@@ -1,4 +1,4 @@
-# Audio Recording and Transcript Webscraping Tools
+# Recording and Transcription Webscraping Toolkit
 
 This repository is designed to provide automated scripts which have been helpful for accessing videos and transcripts from various platforms. 
 
