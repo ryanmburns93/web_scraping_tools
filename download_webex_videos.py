@@ -5,9 +5,7 @@ Created on Tue Sep 14 14:03:40 2021
 @author: Ryan Burns
 """
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
@@ -18,7 +16,6 @@ from datetime import date
 from datetime import timezone, timedelta
 from pathlib import Path
 import os
-import sys
 from utilities import go_to_downloads, launch_webdriver
 
 
@@ -57,8 +54,7 @@ def get_webex_video_list(url, api_url, driver):
     """
     driver.get(url)
     try:
-        '''Need to allow enough time to manually
-        enter WebEx login credentials.'''
+        # Need to allow enough time to manually enter WebEx login credentials.
         (WebDriverWait(driver, 90).
          until(EC.
                presence_of_all_elements_located((By.XPATH,
@@ -68,9 +64,8 @@ def get_webex_video_list(url, api_url, driver):
         pre = driver.find_element_by_tag_name("pre").text
         recording_data = json.loads(pre)
         return(recording_data)
-    except Exception as e:
-        raise e
-        return
+    except NoSuchElementException:
+        return None
 
 
 def download_webex_recordings(recording_data, date_val, driver):
@@ -136,7 +131,7 @@ def download_webex_recordings(recording_data, date_val, driver):
             time.sleep(5)
             print('Completed scraping of recording ' +
                   str(recording_data['recordings'].index(x)+1))
-    return
+    return None
 
 
 def rename_webex_files_to_mountain_time():
@@ -161,12 +156,12 @@ def rename_webex_files_to_mountain_time():
                     target = Path(filepath_string)
                     x.rename(target)
                     print(f"Done renaming {filepath_string}.")
-                except Exception:
+                except FileNotFoundError:
                     pass
-            except Exception:
+            except FileNotFoundError:
                 pass
     print('Completed renaming video files.')
-    return
+    return None
 
 
 def utc_to_local(utc_dt):
@@ -231,6 +226,7 @@ def main():
                                           driver)
     download_webex_recordings(recording_data, date_val, driver)
     rename_webex_files_to_mountain_time()
+    return None
 
 
 if __name__ == "__main__":
