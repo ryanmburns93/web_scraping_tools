@@ -226,7 +226,6 @@ def main():
                                           driver)
     download_webex_recordings(recording_data, date_val, driver)
     rename_webex_files_to_mountain_time()
-    return None
 
 
 if __name__ == "__main__":
