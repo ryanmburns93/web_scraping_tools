@@ -7,13 +7,14 @@ Created on Tue Sep 14 17:21:22 2021
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os
-import sys
-from utilities import go_to_downloads, scroll
+from utilities import scroll
 
 web_string_list = []
 xpath_url_lib = {'stream_group_url': ('https://web.microsoftstream.com/group/'
@@ -54,6 +55,46 @@ xpath_url_lib = {'stream_group_url': ('https://web.microsoftstream.com/group/'
                                        'ng-transclude/div/flex-drawer/div/div'
                                        '/span[1]/button')}
 
+os.environ['WDM_LOG_LEVEL'] = '0' # Webdriver_Manager set to silence output
+os.environ['WDM_PRINT_FIRST_LINE'] = 'False' # Webdriver_Manager set to silence first-line output on start
+
+
+def launch_webdriver(headless=False):
+    """
+    Instantiate the webdriver application with explicitly defined options.
+    Helper function.
+
+    Options set webdriver to maximized window at start, loads and saves into the specified
+    chromedriver user profile, removes automation warning from screen, and disables excessive
+    error and warning logging.
+
+    Parameters
+    ----------
+    headless : bool, optional
+        Boolean indicator for whether to launch the chromedriver instance as headless.
+        The default is False.
+
+    Returns
+    -------
+    driver : webdriver
+        Initialized webdriver for retrieving and manipulating web pages.
+
+    """
+    options = ChromeOptions()
+    options.add_argument("--log-level=3")  # disable Info/Error/Warning in Chrome Driver
+    if headless:
+        options.headless = True # run driver as invisible to user
+    else:
+        options.add_argument("start-maximized")
+    options.add_experimental_option('excludeSwitches', ['load-extension',
+                                                        'enable-automation', # remove automated-browser warning on top of browser
+                                                        'enable-logging']) # disable logging
+    capabilities = webdriver.DesiredCapabilities.CHROME.copy()
+    # capabilities['goog:loggingPrefs'] = {'performance': 'ALL'} # enable ability to log network traffic
+    s=ChromeService(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=s, options=options, desired_capabilities=capabilities)
+    return driver
+
 
 def collect_video_links(driver):
     """
@@ -82,7 +123,16 @@ def collect_video_links(driver):
             'show_more_button_xpath'])
         show_more_button.click()
     except Exception:
-        pass
+        time.sleep(3)
+        (WebDriverWait(driver, 120).
+         until(EC.
+               presence_of_all_elements_located((By.XPATH,
+                                                 xpath_url_lib[
+                                                     'show_more_button_xpath'])
+                                                )))
+        show_more_button = driver.find_element_by_xpath(xpath_url_lib[
+            'show_more_button_xpath'])
+        show_more_button.click()
     try:
         scroll(driver, 3)
         scroll(driver, 5)
@@ -164,7 +214,6 @@ def download_videos(driver):
         show_more_button.click()
     except Exception as e:
         print(e)
-        pass
     try:
         scroll(driver, 2)
         scroll(driver, 3)
@@ -178,19 +227,18 @@ def download_videos(driver):
                                               'download_video_xpath']))
     except Exception as e:
         print(e)
-        pass
-    for i in range(len(menu_drawer_button_list)):
+    for index, button in enumerate(menu_drawer_button_list):
         attempts = 3
         while attempts > 0:
             try:
-                menu_drawer_button_list[i].click()
+                button.click()
                 (WebDriverWait(driver, 10).
                  until(EC.
                        visibility_of(
-                           download_video_button_list[i])))
-                download_video_button_list[i].click()
+                           download_video_button_list[index])))
+                download_video_button_list[index].click()
                 time.sleep(5)
-                print(f'Completed download of video {i+1} of '
+                print(f'Completed download of video {index+1} of '
                       f'{len(menu_drawer_button_list)}')
                 attempts = 0
             except Exception as e:

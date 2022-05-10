@@ -16,7 +16,7 @@ from datetime import date
 from datetime import timezone, timedelta
 from pathlib import Path
 import os
-from utilities import go_to_downloads, launch_webdriver
+from scraping_utilities import go_to_downloads, launch_webdriver
 
 
 url_xpath_dict = {'url': ('https://gartner.webex.com/webappng/sites'
@@ -154,14 +154,19 @@ def rename_webex_files_to_mountain_time():
                     filepath_string = os.path.join(path,
                                                    local_dt + x.name[-4:])
                     target = Path(filepath_string)
-                    x.rename(target)
+                    try:
+                        x.rename(target)
+                    except FileExistsError:
+                        filepath_string = (filepath_string[:-4] + '_dupe' +
+                                           x.name[-4:])
+                        target = Path(filepath_string)
+                        x.rename(target)
                     print(f"Done renaming {filepath_string}.")
                 except FileNotFoundError:
                     pass
             except FileNotFoundError:
                 pass
     print('Completed renaming video files.')
-    return None
 
 
 def utc_to_local(utc_dt):
