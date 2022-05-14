@@ -11,10 +11,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os
-from utilities import scroll
+from scraping_utilities import scroll
 
 web_string_list = []
 xpath_url_lib = {'stream_group_url': ('https://web.microsoftstream.com/group/'
@@ -91,7 +92,7 @@ def launch_webdriver(headless=False):
                                                         'enable-logging']) # disable logging
     capabilities = webdriver.DesiredCapabilities.CHROME.copy()
     # capabilities['goog:loggingPrefs'] = {'performance': 'ALL'} # enable ability to log network traffic
-    s=ChromeService(ChromeDriverManager().install())
+    s = ChromeService(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=s, options=options, desired_capabilities=capabilities)
     return driver
 
@@ -107,8 +108,9 @@ def collect_video_links(driver):
 
     Returns
     -------
-    web_string_list : TYPE
-        DESCRIPTION.
+    web_string_list : list
+        List of strings for unique identification and access of web
+        videos from platform.
 
     """
     driver.get(xpath_url_lib['stream_group_url'])
@@ -122,7 +124,7 @@ def collect_video_links(driver):
         show_more_button = driver.find_element_by_xpath(xpath_url_lib[
             'show_more_button_xpath'])
         show_more_button.click()
-    except Exception:
+    except (TimeoutException, NoSuchElementException):
         time.sleep(3)
         (WebDriverWait(driver, 120).
          until(EC.
@@ -186,7 +188,8 @@ def download_transcripts(web_string_list, driver):
 
 def download_videos(driver):
     """
-
+    Navigate through infinite scroll and get list of all video and transcript
+    download buttons.
 
     Parameters
     ----------
@@ -195,10 +198,11 @@ def download_videos(driver):
 
     Returns
     -------
-    menu_drawer_button_list : TYPE
-        DESCRIPTION.
-    download_video_button_list : TYPE
-        DESCRIPTION.
+    menu_drawer_button_list : list
+        List of all buttons on page for viewing and downloading
+        transcripts.
+    download_video_button_list : list
+        List of all buttons on page for downloading videos.
 
     """
     driver.get(xpath_url_lib['stream_group_url'])
@@ -212,7 +216,7 @@ def download_videos(driver):
         show_more_button = driver.find_element_by_xpath(xpath_url_lib[
             'show_more_button_xpath'])
         show_more_button.click()
-    except Exception as e:
+    except (TimeoutException, NoSuchElementException) as e:
         print(e)
     try:
         scroll(driver, 2)
@@ -225,7 +229,7 @@ def download_videos(driver):
                                       find_elements_by_xpath(
                                           xpath_url_lib[
                                               'download_video_xpath']))
-    except Exception as e:
+    except (TimeoutException, NoSuchElementException) as e:
         print(e)
     for index, button in enumerate(menu_drawer_button_list):
         attempts = 3
@@ -241,7 +245,7 @@ def download_videos(driver):
                 print(f'Completed download of video {index+1} of '
                       f'{len(menu_drawer_button_list)}')
                 attempts = 0
-            except Exception as e:
+            except (TimeoutException, NoSuchElementException) as e:
                 print(e)
                 attempts -= 1
     return menu_drawer_button_list, download_video_button_list

@@ -9,9 +9,10 @@ import os
 import ctypes
 from ctypes import windll, wintypes
 from uuid import UUID
-import sys
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def scroll(driver, timeout):
@@ -122,31 +123,38 @@ def go_to_downloads():
     get_download_folder()
 
 
-def launch_webdriver(webdriver_path=None):
+def launch_webdriver(headless=False):
     """
-    Instantiate the webdriver application.
+    Instantiate the webdriver application with explicitly defined options.
+    Helper function.
 
-    Need to save updated webdriver application to downloads folder or
-    hardcode path to webdriver. Options can also be set to run a
-    headless webdriver, but this is not the given state due to login
-    requirements.
+    Options set webdriver to maximized window at start, loads and saves into the specified
+    chromedriver user profile, removes automation warning from screen, and disables excessive
+    error and warning logging.
 
     Parameters
     ----------
-    webdriver_path : string, optional
-        Alternate filepath to directory containing chromedriver.exe.
-        The default is None.
+    headless : bool, optional
+        Boolean indicator for whether to launch the chromedriver instance as headless.
+        The default is False.
 
     Returns
     -------
     driver : webdriver
         Initialized webdriver for retrieving and manipulating web pages.
+
     """
-    options = Options()
-    if webdriver_path is None:
-        go_to_downloads()
-    driver_filepath = (os.path.join(os.getcwd(), 'chromedriver.exe'))
-    sys.path.append(driver_filepath)
-    driver = webdriver.Chrome(driver_filepath,
-                              options=options)
+    options = ChromeOptions()
+    options.add_argument("--log-level=3")  # disable Info/Error/Warning in Chrome Driver
+    if headless:
+        options.headless = True # run driver as invisible to user
+    else:
+        options.add_argument("start-maximized")
+    options.add_experimental_option('excludeSwitches', ['load-extension',
+                                                        'enable-automation', # remove automated-browser warning on top of browser
+                                                        'enable-logging']) # disable logging
+    capabilities = webdriver.DesiredCapabilities.CHROME.copy()
+    # capabilities['goog:loggingPrefs'] = {'performance': 'ALL'} # enable ability to log network traffic
+    s = ChromeService(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=s, options=options, desired_capabilities=capabilities)
     return driver

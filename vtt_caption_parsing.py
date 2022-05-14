@@ -39,8 +39,8 @@ def get_vtt_file_list(vtt_dir=None):
     Parameters
     ----------
     vtt_dir : string, optional
-        File path to directory containing .vtt files. The default is None,
-        in which case the current working directory is searched.
+        File path to directory containing .vtt files, or will search the current
+        working directory if value is None.. The default is None.
 
     Returns
     -------
@@ -57,6 +57,14 @@ def get_vtt_file_list(vtt_dir=None):
 
 
 def main():
+    """
+    Parse list of .vtt caption files into transcript .txt files.
+
+    Return
+    ------
+    None.
+
+    """
     vtt_list = get_vtt_file_list()
     print(f'Found {len(vtt_list)} caption files. Beginning parsing.')
     i = 0
@@ -69,6 +77,7 @@ def main():
             file.write(text)
         i += 1
         print(f'{round(i/num_vids*100, 2)}% complete')
+    return
 
 
 if __name__ == "__main__":

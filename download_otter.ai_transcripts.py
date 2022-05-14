@@ -97,7 +97,7 @@ def download_transcripts(driver, link_list):
     ----------
     driver : webdriver object
         Instantiated webdriver object for page navigation.
-    link_list : TYPE
+    link_list : list
         List of url addresses to each individual video page on Otter.ai.
 
     Returns
@@ -139,10 +139,19 @@ def download_transcripts(driver, link_list):
 
 
 def main():
+    """
+    Download all transcripts available on Otter.ai account.
+
+    Return
+    ------
+    None.
+
+    """
     driver = launch_webdriver()
     url = 'https://otter.ai/all-notes'
     link_list = collect_video_links(driver, url)
     download_transcripts(driver, link_list)
+    return
 
 
 if __name__ == "__main__":

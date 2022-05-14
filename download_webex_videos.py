@@ -49,7 +49,8 @@ def get_webex_video_list(url, api_url, driver):
 
     Returns
     -------
-    None.
+    recording_data : dict
+        Dictionary of the WebEx metadata for a single video.
 
     """
     driver.get(url)
@@ -63,7 +64,7 @@ def get_webex_video_list(url, api_url, driver):
         driver.get(api_url)
         pre = driver.find_element_by_tag_name("pre").text
         recording_data = json.loads(pre)
-        return(recording_data)
+        return recording_data
     except NoSuchElementException:
         return None
 
@@ -135,7 +136,14 @@ def download_webex_recordings(recording_data, date_val, driver):
 
 
 def rename_webex_files_to_mountain_time():
-    """Rename WebEx filename pattern matches to Mountain Time filename."""
+    """
+    Rename WebEx filename pattern matches to Mountain Time filename.
+
+    Return
+    ------
+    None.
+
+    """
     go_to_downloads()
     path = Path('.')
     video_list = list(path.glob('**/*.mp4'))
@@ -167,6 +175,7 @@ def rename_webex_files_to_mountain_time():
             except FileNotFoundError:
                 pass
     print('Completed renaming video files.')
+    return
 
 
 def utc_to_local(utc_dt):
@@ -184,14 +193,15 @@ def utc_to_local(utc_dt):
 
     Returns
     -------
-    string
+    vid_dt_string : str
         The date and time converted from the GMT date object to local time.
 
     """
     local_tz = timezone(offset=-timedelta(hours=6), name="Mountain")
     fmt = '%m-%d-%Y, %I.%M %p'
     vid_dt = utc_dt.astimezone(local_tz)
-    return vid_dt.strftime(fmt)
+    vid_dt_string = vid_dt.strftime(fmt)
+    return vid_dt_string
 
 
 def get_date_val():
@@ -231,6 +241,7 @@ def main():
                                           driver)
     download_webex_recordings(recording_data, date_val, driver)
     rename_webex_files_to_mountain_time()
+    return
 
 
 if __name__ == "__main__":
